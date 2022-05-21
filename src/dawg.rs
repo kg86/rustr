@@ -4,8 +4,7 @@ use crate::stree_json;
 
 pub fn dawg(text: &bstr) -> stree_json::StreeSerde {
     let subs = substrs(text);
-    let sufs = suf_set(text);
-    let rgmap = epos_groups_(&subs, &sufs);
+    let rgmap = epos_groups(text);
     let sigma = alphabet_set(text);
 
     let rmaxs = rgmap

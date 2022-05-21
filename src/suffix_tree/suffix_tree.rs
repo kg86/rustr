@@ -6,8 +6,7 @@ use crate::stree_json;
 
 pub fn suffix_tree(text: &bstr) -> stree_json::StreeSerde {
     let subs = substrs(text);
-    let sufs = suf_set(text);
-    let lgmap = bpos_groups_(&subs, &sufs);
+    let lgmap = bpos_groups(text);
     let rmaxs: HashSet<BString> = subs
         .iter()
         .cloned()

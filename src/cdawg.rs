@@ -6,10 +6,8 @@ use crate::stree_json;
 
 pub fn cdawg(text: &bstr) -> stree_json::StreeSerde {
     let subs = substrs(text);
-    let pres = pref_set(text);
-    let sufs = suf_set(text);
-    let lgmap = bpos_groups_(&subs, &pres);
-    let rgmap = epos_groups_(&subs, &sufs);
+    let lgmap = bpos_groups(text);
+    let rgmap = epos_groups(text);
     let rm_req = |x: &Vec<_>| left_maximal(&right_maximal(&x, &lgmap), &rgmap);
     let sigma = alphabet_set(text);
 

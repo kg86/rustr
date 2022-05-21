@@ -71,26 +71,41 @@ pub fn substrs_sli(text: &bstr) -> HashSet<&bstr> {
         .collect()
 }
 
-/// Returns a set of strings whose prefixes are trimmed by a given string.
-/// If a string does not start with a given string, it is ignored.
+/// Filters strings that begin with a given string,
+/// and returns a set of strings whose prefixes are trimmed by the given string.
 pub fn trim_pre(ss: &HashSet<BString>, pre: &bstr) -> HashSet<BString> {
-    // assert!(text.starts_with(pre));
     ss.iter()
-        .cloned()
         .filter(|x| x.starts_with(pre))
         .map(|x| bstr2bstring(&x[pre.len()..]))
         .collect()
 }
 
-/// Returns a set of strings whose suffixes are trimmed by a given string.
-/// If a string does not end with a given string, it is ignored.
+#[test]
+fn test_trim_pre() {
+    let ss = HashSet::from(["abab", "acbb", "ccbb", "acc"].map(str2bstring));
+    let pre = str2bstring("ac");
+    let pre_ss = trim_pre(&ss, &pre);
+    let ans = HashSet::from(["bb", "c"].map(str2bstring));
+    assert_eq!(pre_ss, ans);
+}
+
+/// Filters strings that end with a given string,
+/// and returns a set of strings whose suffixes are trimmed by the given string.
 pub fn trim_suf(ss: &HashSet<BString>, suf: &bstr) -> HashSet<BString> {
     // assert!(text.starts_with(pre));
     ss.iter()
-        .cloned()
         .filter(|x| x.ends_with(suf))
         .map(|x| bstr2bstring(&x[..(x.len() - suf.len())]))
         .collect()
+}
+
+#[test]
+fn test_trim_suf() {
+    let ss = HashSet::from(["abab", "acbb", "ccbb", "acc"].map(str2bstring));
+    let suf = str2bstring("bb");
+    let suf_ss = trim_suf(&ss, &suf);
+    let ans = HashSet::from(["ac", "cc"].map(str2bstring));
+    assert_eq!(suf_ss, ans);
 }
 
 /// Returns a set of strings that start with a given string.
@@ -355,29 +370,53 @@ fn test_nocc() {
     assert_eq!(2, *nocc.get(&str2bstring("ana")).unwrap());
 }
 
-/// Check whther `x` and `y` is left equal or not, where
-/// `x` and `y` are left equal when end positions of each occurrences are equal.
-///
-/// $x \equiv_w^L y \Leftrightarrow \mathit{Prefix}(w)x^{-1}=\mathit{Prefix}(w)y^{-1}$.
-/// The equivalence class of $x$ is denoted by $\[x\]_w^L$.
-/// $\rightarrow(x)$ is the longest string of $\[x\]_w^L$.
-///
-/// $x \equiv_w^{\prime L} y$ is the equivalence closure of $X_w= \lbrace (x, a)| a \in \Sigma \rbrace$.
-///
-/// The equivalence class of $x$ is denoted by $\[x\]_w^{\prime L}$.
-///
-/// $\Rightarrow(x)$ is the longest string of $\[x\]_w^{\prime L}$.
-pub fn eq_bpos(x: &bstr, y: &bstr, pres: &HashSet<BString>) -> bool {
-    // filter_suf(pres, x) == filter_suf(pres, y)
+/// Returns a set of the beginning positions of a given string `x` in `w`.
+pub fn beg_pos(w: &bstr, x: &bstr) -> HashSet<usize> {
+    (0..w.len()).filter(|i| w[*i..].starts_with(x)).collect()
+}
+
+#[test]
+fn test_beg_pos() {
+    let text = str2bstr("cocoaccao");
+    let pat = str2bstr("co");
+    let bpos = beg_pos(text, pat);
+    assert_eq!(bpos, HashSet::from([0, 2]));
+}
+
+/// Checks whether beginning positions of substrings `x` and `y` of `w` is equal.
+pub fn eq_bpos_pres(x: &bstr, y: &bstr, pres: &HashSet<BString>) -> bool {
     trim_suf(pres, x) == trim_suf(pres, y)
 }
 
-/// Check whther `x` and `y` is right equal or not, where
-/// `x` and `y` are right equal when beginning positions of each occurrences are equal.
-// pub fn requal(x: &BString, y: &BString, sufs: &HashSet<BString>) -> bool {
-pub fn eq_epos(x: &bstr, y: &bstr, sufs: &HashSet<BString>) -> bool {
-    // filter_pre(sufs, x) == filter_pre(sufs, y)
+/// Checks whether beginning positions of substrings `x` and `y` of `w` is equal.
+pub fn eq_bpos(w: &bstr, x: &bstr, y: &bstr) -> bool {
+    beg_pos(w, x) == beg_pos(w, y)
+}
+
+#[test]
+fn test_eq_bpos() {
+    let text = str2bstr("acocoaao");
+    let x = str2bstr("co");
+    let y = str2bstr("c");
+    let z = str2bstr("aco");
+    assert!(eq_bpos(text, x, y));
+    assert!(!eq_bpos(text, x, z));
+}
+
+/// Returns a set of the ending positions of a given string `x` in `w`.
+pub fn end_pos(w: &bstr, x: &bstr) -> HashSet<usize> {
+    (0..w.len()).filter(|i| w[*i..].ends_with(x)).collect()
+}
+
+/// Checks whether ending positions of substrings `x` and `y` of `w` is equal.
+pub fn eq_epos_suf(x: &bstr, y: &bstr, sufs: &HashSet<BString>) -> bool {
     trim_pre(sufs, x) == trim_pre(sufs, y)
+}
+
+/// Checks whether ending positions of substrings `x` and `y` of `w` is equal.
+pub fn eq_epos(w: &bstr, x: &bstr, y: &bstr) -> bool {
+    let ss = suf_set(w);
+    eq_epos_suf(x, y, &ss)
 }
 
 #[test]
@@ -391,19 +430,17 @@ fn test_lr_eq() {
     let a = str2bstr("a");
     let b = str2bstr("b");
     let ban = str2bstr("ban");
-    assert!(eq_bpos(ana, an, &pres));
-    assert!(!eq_bpos(ana, a, &pres));
-    assert!(!eq_bpos(na, a, &pres));
-    assert!(eq_bpos(b, ban, &pres));
+    assert!(eq_bpos_pres(ana, an, &pres));
+    assert!(!eq_bpos_pres(ana, a, &pres));
+    assert!(!eq_bpos_pres(na, a, &pres));
+    assert!(eq_bpos_pres(b, ban, &pres));
     // requal
-    assert!(eq_epos(ana, na, &sufs));
-    assert!(!eq_epos(ana, an, &sufs));
-    assert!(!eq_epos(ana, a, &sufs));
+    assert!(eq_epos_suf(ana, na, &sufs));
+    assert!(!eq_epos_suf(ana, an, &sufs));
+    assert!(!eq_epos_suf(ana, a, &sufs));
 }
 
-/// Returns an index of left equal substring sets.
-/// For a key of substring, index stores a set of its left equal substrings.
-pub fn bpos_groups_(
+fn bpos_groups_(
     subs: &HashSet<BString>,
     pres: &HashSet<BString>,
 ) -> HashMap<BString, HashSet<BString>> {
@@ -413,7 +450,7 @@ pub fn bpos_groups_(
     }
     for x in subs.iter() {
         for y in subs.iter() {
-            if x != y && eq_bpos(&x, &y, pres) {
+            if x != y && eq_bpos_pres(&x, &y, pres) {
                 beg_groups.get_mut(x).unwrap().insert(y.clone());
                 beg_groups.get_mut(y).unwrap().insert(x.clone());
             }
@@ -422,17 +459,37 @@ pub fn bpos_groups_(
     beg_groups
 }
 
-/// Returns an index of left equal substring sets.
-/// For a key of substring, index stores a set of its left equal substrings.
+/// Returns an index to beginning position groups
+/// For a key of substring, the index stores a set of strings
+/// whose beginning positions are the same to ones of the key.
 pub fn bpos_groups(text: &bstr) -> HashMap<BString, HashSet<BString>> {
     let subs = substrs(text);
     let prefs = pref_set(text);
     bpos_groups_(&subs, &prefs)
 }
 
-/// Returns an index of right equal substring sets.
-/// For a key of substring, index stores a set of its right equal substrings.
-pub fn epos_groups_(
+#[test]
+fn test_bpos_groups() {
+    let text = str2bstr("cocoa");
+    let bgroup = bpos_groups(text);
+    assert_eq!(
+        *bgroup.get(str2bstr("a")).unwrap(),
+        HashSet::from(["a"].map(str2bstring))
+    );
+    assert_eq!(
+        *bgroup.get(str2bstr("oco")).unwrap(),
+        HashSet::from(["oc", "oco", "ocoa"].map(str2bstring))
+    );
+    assert_eq!(
+        *bgroup.get(str2bstr("c")).unwrap(),
+        HashSet::from(["c", "co"].map(str2bstring))
+    );
+    // for (k, v) in bgroup {
+    //     println!("[{}]={}", bstr2string(&k), bstrs2string_set(&v));
+    // }
+}
+
+fn epos_groups_(
     subs: &HashSet<BString>,
     sufs: &HashSet<BString>,
 ) -> HashMap<BString, HashSet<BString>> {
@@ -442,7 +499,7 @@ pub fn epos_groups_(
     }
     for x in subs.iter() {
         for y in subs.iter() {
-            if x != y && eq_epos(&x, &y, sufs) {
+            if x != y && eq_epos_suf(&x, &y, sufs) {
                 req_groups.get_mut(x).unwrap().insert(y.clone());
                 req_groups.get_mut(y).unwrap().insert(x.clone());
             }
@@ -451,8 +508,9 @@ pub fn epos_groups_(
     req_groups
 }
 
-/// Returns an index of right equal substring sets.
-/// For a key of substring, index stores a set of its right equal substrings.
+/// Returns an index to ending position groups
+/// For a key of substring, the index stores a set of strings
+/// whose ending positions are the same to ones of the key.
 pub fn epos_groups(text: &bstr) -> HashMap<BString, HashSet<BString>> {
     let subs = substrs(text);
     let sufs = suf_set(text);
