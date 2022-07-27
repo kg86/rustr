@@ -1,15 +1,23 @@
+use std::hash::Hash;
+
 use crate::bstr::*;
 use crate::commons::*;
 
 /// Note that an empty string is not a lyndon word.
 
 /// Checks whether a given string is a lyndon word.
-pub fn is_lyndon(text: &bstr) -> bool {
+pub fn is_lyndon<T>(text: &[T]) -> bool
+where
+    T: Clone + PartialOrd + Eq + Hash,
+{
     is_lyndon_naive(text)
 }
 
 /// Checks whether a given string is a lyndon word in a naive way.
-pub fn is_lyndon_naive(text: &bstr) -> bool {
+pub fn is_lyndon_naive<T>(text: &[T]) -> bool
+where
+    T: Clone + std::hash::Hash + PartialOrd + Eq,
+{
     if !is_primitive(text) {
         return false;
     }
@@ -19,7 +27,7 @@ pub fn is_lyndon_naive(text: &bstr) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
 
 #[test]
@@ -34,19 +42,25 @@ fn test_is_lyndon() {
 }
 
 /// Enumerates lyndon words of length `len`.
-pub fn enum_lyndon_len_eq(alph: &Vec<BString>, len: usize) -> Vec<BString> {
+pub fn enum_lyndon_len_eq<T>(alph: &[T], len: usize) -> Vec<Vec<T>>
+where
+    T: Clone + PartialOrd + Eq + Hash,
+{
     let xs = enum_strs_len_eq(alph, len);
     xs.into_iter().filter(|x| is_lyndon(x)).collect()
 }
 
 /// Enumerates lyndon words whose lengths are less than or equal to `len`.
-pub fn enum_lyndon_len_leq(alpha: &Vec<BString>, len: usize) -> Vec<BString> {
+pub fn enum_lyndon_len_leq<T>(alpha: &[T], len: usize) -> Vec<Vec<T>>
+where
+    T: PartialOrd + Clone + Eq + Hash,
+{
     let mut res = Vec::new();
     for i in 0..=len {
         res.extend(enum_lyndon_len_eq(alpha, i));
     }
     println!("lyndon debug");
-    println!("{}, len={}", bstrs2string(&res), res.len());
+    // println!("{}, len={}", bstrs2string(&res), res.len());
     res
 }
 

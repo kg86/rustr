@@ -7,7 +7,7 @@ pub fn is_palindrome(text: &bstr) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
 
 #[test]

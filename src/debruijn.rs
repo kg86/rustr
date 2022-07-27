@@ -1,11 +1,15 @@
 use std::collections::HashSet;
+use std::hash::Hash;
 
-use crate::bstr::*;
 use crate::commons::*;
 use crate::lyndon::*;
 
 /// Checks whether a given string is a de Bruijn word.
-pub fn is_debruijn(text: &bstr, order: usize) -> bool {
+// pub fn is_debruijn(text: &bstr, order: usize) -> bool {
+pub fn is_debruijn<T>(text: &[T], order: usize) -> bool
+where
+    T: Clone + Eq + Hash,
+{
     let alphabet = alphabet_set(text);
     if alphabet.len() == 1 {
         return text.len() == 1;
@@ -18,24 +22,25 @@ pub fn is_debruijn(text: &bstr, order: usize) -> bool {
     }
     let mut substrs = HashSet::new();
     for i in 0..(text.len() - order) {
-        if !alphabet.contains(&text[i..i + 1]) || substrs.contains(&text[i..(i + order)]) {
+        if !alphabet.contains(&text[i]) || substrs.contains(&text[i..(i + order)]) {
             return false;
         }
         substrs.insert(&text[i..(i + order)]);
     }
-    return true;
+    true
 }
 
 #[test]
 fn test_is_debruijn() {
-    assert!(is_debruijn(str2bstr("a"), 1));
-    assert!(is_debruijn(str2bstr("b"), 1));
-    assert!(is_debruijn(str2bstr("ab"), 1));
-    assert!(is_debruijn(str2bstr("ba"), 1));
-    assert!(!is_debruijn(str2bstr("aa"), 1));
-    assert!(is_debruijn(str2bstr("aabba"), 2));
-    assert!(!is_debruijn(str2bstr("aabb"), 2));
-    assert!(is_debruijn(str2bstr("aaababbbaa"), 3));
+    // assert!(is_debruijn(str2bstr("a"), 1));
+    assert!(is_debruijn(br"a", 1));
+    assert!(is_debruijn(br"b", 1));
+    assert!(is_debruijn(br"ab", 1));
+    assert!(is_debruijn(br"ba", 1));
+    assert!(!is_debruijn(br"aa", 1));
+    assert!(is_debruijn(br"aabba", 2));
+    assert!(!is_debruijn(br"aabb", 2));
+    assert!(is_debruijn(br"aaababbbaa", 3));
 }
 
 /// Computes a de Bruijn Word.
@@ -43,7 +48,10 @@ fn test_is_debruijn() {
 /// Let $A$ be alphabet, and $k$ be a integer.
 /// A string $x$ is a de Bruijn word if each string of $A^k$ occurs
 /// only once in $x$.
-pub fn debruijn(alphabet: &Vec<BString>, order: usize) -> BString {
+pub fn debruijn<T>(alphabet: &[T], order: usize) -> Vec<T>
+where
+    T: Clone + Ord + Eq + Hash,
+{
     debruijn_lex_smallest(alphabet, order)
 }
 
@@ -56,23 +64,28 @@ fn divisors(n: usize) -> Vec<usize> {
 }
 
 /// Compute the lexicographically smallest de Bruijn word.
-pub fn debruijn_lex_smallest(alphabet: &Vec<BString>, order: usize) -> BString {
-    let mut lyndons: Vec<BString> = divisors(order)
+pub fn debruijn_lex_smallest<T>(alphabet: &[T], order: usize) -> Vec<T>
+where
+    T: Clone + Ord + Eq + Hash,
+{
+    let mut lyndons: Vec<Vec<T>> = divisors(order)
         .into_iter()
         .map(|len| enum_lyndon_len_eq(alphabet, len))
         .flatten()
         .collect();
     lyndons.sort();
-    fn index2(alphabet: &Vec<BString>, key: &bstr) -> usize {
+    fn index2<T>(alphabet: &[T], key: &T) -> usize
+    where
+        T: Clone + Ord + Eq + Hash,
+    {
         let pos = alphabet.iter().position(|x| x == key);
-        // println!("key={}, pos={:?}", bstr2string(key), pos);
         pos.unwrap()
     }
     // println!("lyndons={}", bstrs2string(&lyndons));
     let mut debu = lyndons.concat();
     debu.extend(debu[..(order - 1)].to_vec());
     // ordering
-    let mut alpha_asc = alphabet.clone();
+    let mut alpha_asc: Vec<T> = alphabet.to_vec();
     alpha_asc.sort();
     let is_asc = {
         let mut res = true;
@@ -90,8 +103,8 @@ pub fn debruijn_lex_smallest(alphabet: &Vec<BString>, order: usize) -> BString {
     // );
     if !is_asc {
         for i in 0..debu.len() {
-            let j = index2(&alpha_asc, &debu[i..i + 1]);
-            debu[i] = alphabet[j][0];
+            let j = index2(&alpha_asc, &debu[i]);
+            debu[i] = alphabet[j].clone();
         }
     }
     debu
@@ -99,14 +112,14 @@ pub fn debruijn_lex_smallest(alphabet: &Vec<BString>, order: usize) -> BString {
 
 #[test]
 fn test_debruijn() {
-    let alpha = alphabet_asc(str2bstr("ab"));
+    let alpha = alphabet_asc(br"ab");
     let deb2 = debruijn_lex_smallest(&alpha, 2);
     let deb3 = debruijn_lex_smallest(&alpha, 3);
-    assert_eq!(str2bstring("aabba"), deb2);
-    assert_eq!(str2bstring("aaababbbaa"), deb3);
-    let alpha_desc = alphabet_desc(str2bstr("ab"));
+    assert_eq!(br"aabba".to_vec(), deb2);
+    assert_eq!(br"aaababbbaa".to_vec(), deb3);
+    let alpha_desc = alphabet_desc(br"ab");
     let deb4 = debruijn_lex_smallest(&alpha_desc, 2);
     let deb5 = debruijn_lex_smallest(&alpha_desc, 3);
-    assert_eq!(str2bstring("bbaab"), deb4);
-    assert_eq!(str2bstring("bbbabaaabb"), deb5);
+    assert_eq!(br"bbaab".to_vec(), deb4);
+    assert_eq!(br"bbbabaaabb".to_vec(), deb5);
 }

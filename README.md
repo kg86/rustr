@@ -15,7 +15,7 @@
 ### String Classes
 
 - Fibonacci String
-- Lyndon Word
+- [Lyndon Word](./src/lyndon.rs)
 - Palindrome
 
 ### Others

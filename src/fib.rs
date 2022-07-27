@@ -13,14 +13,20 @@
 //! - $F(3) = \mathrm{abaab}$, and so on.
 
 use crate::bstr::*;
-pub fn fibstr(i: usize, first: &bstr, second: &bstr) -> BString {
+pub fn fibstr<T>(i: usize, first: &T, second: &T) -> Vec<T>
+where
+    T: Clone,
+{
     if i == 0 {
-        first.to_vec()
+        vec![first.clone()]
+        // first.to_vec()
     } else if i == 1 {
-        [first, second].concat()
+        vec![first.clone(), second.clone()]
+        // [first, second].concat()
     } else {
-        let mut prev = first.to_vec();
-        let mut cur = [first, second].concat();
+        let mut prev = vec![first.clone()];
+        let mut cur = vec![first.clone(), second.clone()];
+        // let mut cur = [first, second].concat();
         for _ in 2..=i {
             let next = [cur.clone(), prev].concat();
             prev = cur;
@@ -30,12 +36,12 @@ pub fn fibstr(i: usize, first: &bstr, second: &bstr) -> BString {
     }
 }
 
-pub fn fibstr_ab(i: usize) -> BString {
-    fibstr(i, &"a".as_bytes(), &"b".as_bytes())
+pub fn fibstr_ab(i: usize) -> Vec<u8> {
+    fibstr(i, &b'a', &b'b')
 }
 
 pub fn fibstr_01(i: usize) -> BString {
-    fibstr(i, &"0".as_bytes(), &"1".as_bytes())
+    fibstr(i, &b'0', &b'1')
 }
 
 #[test]

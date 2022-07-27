@@ -24,19 +24,19 @@ pub fn bstr2string(bstr: &bstr) -> String {
 
 /// Converts byte strings to a string.
 pub fn bstr2str_sli(bstrs: &[&bstr]) -> String {
-    let strings: Vec<_> = bstrs.into_iter().map(|x| bstr2string(x)).collect();
+    let strings: Vec<_> = bstrs.iter().map(|x| bstr2string(x)).collect();
     format!("{:?}", strings)
 }
 
 /// Converts byte strings to a string.
 pub fn bstrs2string(bstrs: &[BString]) -> String {
-    let strings: Vec<_> = bstrs.into_iter().map(|x| bstr2string(x)).collect();
+    let strings: Vec<_> = bstrs.iter().map(|x| bstr2string(x)).collect();
     format!("{:?}", strings)
 }
 
 /// Converts byte strings to a string.
 pub fn bstrs2string_set(bstrs: &HashSet<BString>) -> String {
-    let mut strings: Vec<_> = bstrs.into_iter().map(|x| bstr2string(x)).collect();
+    let mut strings: Vec<_> = bstrs.iter().map(|x| bstr2string(x)).collect();
     strings.sort();
     format!("{:?}", strings)
 }

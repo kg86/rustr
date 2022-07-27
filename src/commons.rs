@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+};
 
 use crate::bstr::*;
 
@@ -147,23 +150,29 @@ fn test_filter() {
 }
 
 /// Returns a set of characters that appear in a given string.
-pub fn alphabet_set(text: &bstr) -> HashSet<BString> {
-    (0..text.len())
-        .into_iter()
-        .map(|i| text[i..i + 1].to_vec())
-        .collect()
+pub fn alphabet_set<T>(text: &[T]) -> HashSet<T>
+where
+    T: Clone + Eq + std::hash::Hash,
+{
+    text.iter().cloned().collect()
 }
 
 /// Returns a set of characters that appear in a given string.
-pub fn alphabet_asc(text: &bstr) -> Vec<BString> {
+pub fn alphabet_asc<T>(text: &[T]) -> Vec<T>
+where
+    T: Clone + Eq + Hash + Ord,
+{
     let alpha_set = alphabet_set(text);
-    let mut alph: Vec<BString> = alpha_set.into_iter().collect();
+    let mut alph: Vec<T> = alpha_set.into_iter().collect();
     alph.sort();
     alph
 }
 
 /// Returns a set of characters that appear in a given string.
-pub fn alphabet_desc(text: &bstr) -> Vec<BString> {
+pub fn alphabet_desc<T>(text: &[T]) -> Vec<T>
+where
+    T: Clone + Eq + Hash + Ord,
+{
     let mut alph = alphabet_asc(text);
     alph.reverse();
     alph
@@ -172,14 +181,19 @@ pub fn alphabet_desc(text: &bstr) -> Vec<BString> {
 #[test]
 fn test_alphabet() {
     let text = str2bstr("banana");
-    let ans: Vec<_> = ["a", "b", "n"].iter().map(|s| str2bstring(s)).collect();
-    let ans_rev: Vec<_> = ["n", "b", "a"].iter().map(|s| str2bstring(s)).collect();
+    let ans = br"abn".to_vec();
+    // let ans: Vec<_> = ["a", "b", "n"].iter().map(|s| str2bstring(s)).collect();
+    // let ans_rev: Vec<_> = ["n", "b", "a"].iter().map(|s| str2bstring(s)).collect();
+    let ans_rev = br"nba".to_vec();
     assert_eq!(ans, alphabet_asc(&text));
     assert_eq!(ans_rev, alphabet_desc(&text));
 }
 
 /// Returns a string that a given string repeats `k` times.
-pub fn repeat(text: &bstr, k: usize) -> BString {
+pub fn repeat<T>(text: &[T], k: usize) -> Vec<T>
+where
+    T: Clone,
+{
     let mut res = vec![];
     for _ in 0..k {
         res.extend_from_slice(text)
@@ -198,13 +212,19 @@ fn test_repeat() {
 ///
 /// A string is primitive if it is not the power of any other string.
 /// Namely, a string of the form $x=u^k$ for $k>1$ is not a primitive.
-pub fn is_primitive(text: &bstr) -> bool {
+pub fn is_primitive<T>(text: &[T]) -> bool
+where
+    T: Clone + PartialEq,
+{
     is_primitive_naive(text)
 }
 
 /// Checks whether a given string is primitive or not by naive way.
-pub fn is_primitive_naive(text: &bstr) -> bool {
-    if text.len() == 0 {
+pub fn is_primitive_naive<T>(text: &[T]) -> bool
+where
+    T: Clone + PartialEq,
+{
+    if text.is_empty() {
         return false;
     }
     for i in 1..text.len() {
@@ -215,7 +235,7 @@ pub fn is_primitive_naive(text: &bstr) -> bool {
             }
         }
     }
-    return true;
+    true
 }
 
 /// Returns the exponent of a given string.
@@ -248,12 +268,18 @@ fn test_primitive() {
 }
 
 /// Rotates a given string `i` position to the left.
-pub fn rotate_left(text: &bstr, i: usize) -> BString {
+pub fn rotate_left<T>(text: &[T], i: usize) -> Vec<T>
+where
+    T: Clone,
+{
     [&text[i..], &text[0..i]].concat()
 }
 
 /// Enumerates all rotations of a given string.
-pub fn enum_rotate_left(text: &bstr) -> Vec<BString> {
+pub fn enum_rotate_left<T>(text: &[T]) -> Vec<Vec<T>>
+where
+    T: Clone,
+{
     (0..text.len())
         .into_iter()
         .map(|i| rotate_left(text, i))
@@ -261,7 +287,10 @@ pub fn enum_rotate_left(text: &bstr) -> Vec<BString> {
 }
 
 /// Returns a set of all rotations of a given string.
-pub fn enum_rotate_set(text: &bstr) -> HashSet<BString> {
+pub fn enum_rotate_set<T>(text: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Hash + Eq,
+{
     enum_rotate_left(text).into_iter().collect()
 }
 
@@ -293,17 +322,21 @@ fn test_rotate() {
 }
 
 /// Enumerates strings of length `len`.
-pub fn enum_strs_len_eq(alpha: &Vec<BString>, len: usize) -> Vec<BString> {
+pub fn enum_strs_len_eq<T>(alpha: &[T], len: usize) -> Vec<Vec<T>>
+where
+    T: Clone,
+{
     if len == 0 {
-        let mut res = Vec::new();
-        res.push(BString::new());
-        return res;
+        return vec![vec![]];
     }
     let prevs = enum_strs_len_eq(alpha, len - 1);
     let mut res = Vec::new();
     for c in alpha {
         for prev in prevs.iter() {
-            let next = [c.to_vec(), prev.clone()].concat();
+            let mut next = vec![c.clone()];
+            next.extend(prev.to_vec());
+            // next.push(c.clone());
+            // let mut next = prev.to_vec();
             res.push(next);
         }
     }
@@ -312,8 +345,11 @@ pub fn enum_strs_len_eq(alpha: &Vec<BString>, len: usize) -> Vec<BString> {
 }
 
 /// Enumerates strings whose lengths are less than or equal to `len`.
-pub fn enum_strs_len_leq(alphabet: &Vec<BString>, len: usize) -> Vec<BString> {
-    let mut res = Vec::new();
+pub fn enum_strs_len_leq<T>(alphabet: &[T], len: usize) -> Vec<Vec<T>>
+where
+    T: Clone,
+{
+    let mut res = vec![];
     for i in 0..=len {
         res.extend(enum_strs_len_eq(alphabet, i));
     }
@@ -323,16 +359,16 @@ pub fn enum_strs_len_leq(alphabet: &Vec<BString>, len: usize) -> Vec<BString> {
 #[test]
 fn test_enum_strs_len() {
     // let alpha: Vec<BString> = alphabet(str2bstr("ab")).into_iter().collect();
-    let alpha: Vec<BString> = alphabet_asc(str2bstr("ab"));
+    let alpha: Vec<u8> = alphabet_asc(str2bstr("ab"));
     let ss1 = enum_strs_len_eq(&alpha, 1);
     let ss2 = enum_strs_len_eq(&alpha, 2);
     let ss3 = enum_strs_len_eq(&alpha, 3);
     let ans1: Vec<BString> = ["a", "b"].iter().map(|x| str2bstring(x)).collect();
-    let ans2: Vec<BString> = ["aa", "ab", "ba", "bb"]
+    let ans2: Vec<Vec<u8>> = ["aa", "ab", "ba", "bb"]
         .iter()
         .map(|x| str2bstring(x))
         .collect();
-    let ans3: Vec<BString> = ["aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"]
+    let ans3: Vec<Vec<u8>> = ["aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"]
         .iter()
         .map(|x| str2bstring(x))
         .collect();
@@ -349,7 +385,7 @@ fn test_enum_strs_len() {
 
 /// Returns an index that, for a key of substring,
 /// stores the number of occurrences of the key.
-pub fn nocc<'a>(text: &bstr) -> HashMap<BString, usize> {
+pub fn nocc(text: &bstr) -> HashMap<BString, usize> {
     let mut count: HashMap<BString, usize> = HashMap::new();
     for i in 0..text.len() {
         for j in i + 1..=text.len() {
@@ -499,7 +535,7 @@ fn epos_groups_(
     }
     for x in subs.iter() {
         for y in subs.iter() {
-            if x != y && eq_epos_suf(&x, &y, sufs) {
+            if x != y && eq_epos_suf(x, y, sufs) {
                 req_groups.get_mut(x).unwrap().insert(y.clone());
                 req_groups.get_mut(y).unwrap().insert(x.clone());
             }
@@ -527,20 +563,12 @@ fn test_lr_eq_groups() {
     //     let ve: Vec<_> = v.iter().cloned().collect();
     //     println!("k={}, v={}", bstr2string(&k), bstrs2string(&ve));
     // }
-    let ans_an: HashSet<_> = ["na", "ana"]
-        .iter()
-        .cloned()
-        .map(|x| str2bstring(x))
-        .collect();
+    let ans_an: HashSet<_> = ["na", "ana"].iter().cloned().map(str2bstring).collect();
     let res_an = egroup.get(&str2bstring("na")).unwrap();
     assert_eq!(ans_an, *res_an);
 
     let bgroup = bpos_groups(text);
-    let ans_na: HashSet<_> = ["an", "ana"]
-        .iter()
-        .cloned()
-        .map(|x| str2bstring(x))
-        .collect();
+    let ans_na: HashSet<_> = ["an", "ana"].iter().cloned().map(str2bstring).collect();
     let res_na = bgroup.get(&str2bstring("an")).unwrap();
     assert_eq!(ans_na, *res_na);
 }
