@@ -70,8 +70,7 @@ where
 {
     let mut lyndons: Vec<Vec<T>> = divisors(order)
         .into_iter()
-        .map(|len| enum_lyndon_len_eq(alphabet, len))
-        .flatten()
+        .flat_map(|len| enum_lyndon_len_eq(alphabet, len))
         .collect();
     lyndons.sort();
     fn index2<T>(alphabet: &[T], key: &T) -> usize
@@ -102,10 +101,10 @@ where
     //     alphabet, alpha_asc, is_asc
     // );
     if !is_asc {
-        for i in 0..debu.len() {
+        (0..debu.len()).for_each(|i| {
             let j = index2(&alpha_asc, &debu[i]);
             debu[i] = alphabet[j].clone();
-        }
+        });
     }
     debu
 }

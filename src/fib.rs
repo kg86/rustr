@@ -12,7 +12,6 @@
 //! - $F(2) = \mathrm{aba}$
 //! - $F(3) = \mathrm{abaab}$, and so on.
 
-use crate::bstr::*;
 pub fn fibstr<T>(i: usize, first: &T, second: &T) -> Vec<T>
 where
     T: Clone,
@@ -40,14 +39,14 @@ pub fn fibstr_ab(i: usize) -> Vec<u8> {
     fibstr(i, &b'a', &b'b')
 }
 
-pub fn fibstr_01(i: usize) -> BString {
+pub fn fibstr_01(i: usize) -> Vec<u8> {
     fibstr(i, &b'0', &b'1')
 }
 
 #[test]
 fn test_fib() {
-    assert_eq!(str2bstring("a"), fibstr_ab(0));
-    assert_eq!(str2bstring("ab"), fibstr_ab(1));
-    assert_eq!(str2bstring("aba"), fibstr_ab(2));
-    assert_eq!(str2bstring("abaab"), fibstr_ab(3));
+    assert_eq!(&br"a"[..], &fibstr_ab(0));
+    assert_eq!(&br"ab"[..], fibstr_ab(1));
+    assert_eq!(&br"aba"[..], fibstr_ab(2));
+    assert_eq!(&br"abaab"[..], fibstr_ab(3));
 }

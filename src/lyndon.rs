@@ -1,6 +1,5 @@
 use std::hash::Hash;
 
-use crate::bstr::*;
 use crate::commons::*;
 
 /// Note that an empty string is not a lyndon word.
@@ -32,13 +31,13 @@ where
 
 #[test]
 fn test_is_lyndon() {
-    assert!(is_lyndon_naive(str2bstr("a")));
-    assert!(is_lyndon_naive(str2bstr("b")));
-    assert!(!is_lyndon_naive(str2bstr("aa")));
-    assert!(!is_lyndon_naive(str2bstr("bb")));
-    assert!(is_lyndon_naive(str2bstr("aab")));
-    assert!(is_lyndon_naive(str2bstr("abb")));
-    assert!(!is_lyndon_naive(str2bstr("aba")));
+    assert!(is_lyndon_naive(br"a"));
+    assert!(is_lyndon_naive(br"b"));
+    assert!(!is_lyndon_naive(br"aa"));
+    assert!(!is_lyndon_naive(br"bb"));
+    assert!(is_lyndon_naive(br"aab"));
+    assert!(is_lyndon_naive(br"abb"));
+    assert!(!is_lyndon_naive(br"aba"));
 }
 
 /// Enumerates lyndon words of length `len`.
@@ -66,13 +65,12 @@ where
 
 #[test]
 fn test_enum_lyndon_eq() {
-    let alpha = alphabet_asc(str2bstr("ab"));
-    let ans_ab2 = vec![str2bstring("ab")];
-    let ans_ab12 = vec![str2bstring("a"), str2bstring("b"), str2bstring("ab")];
-    let ans_ab3 = ["aab", "abb"]
+    let alpha = alphabet_asc(br"ab");
+    let ans_ab2 = vec![br"ab".to_vec()];
+    let ans_ab12: Vec<Vec<u8>> = vec![br"a".to_vec(), br"b".to_vec(), br"ab".to_vec()];
+    let ans_ab3 = [br"aab", br"abb"]
         .iter()
-        .copied()
-        .map(str2bstring)
+        .map(|x| x.to_vec())
         .collect::<Vec<_>>();
     assert_eq!(ans_ab2, enum_lyndon_len_eq(&alpha, 2));
     assert_eq!(ans_ab12, enum_lyndon_len_leq(&alpha, 2));

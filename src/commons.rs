@@ -6,48 +6,66 @@ use std::{
 use crate::bstr::*;
 
 /// Returns all prefixes of a given string.
-pub fn prefs(text: &bstr) -> Vec<BString> {
+pub fn prefs<T>(text: &[T]) -> Vec<Vec<T>>
+where
+    T: Clone,
+{
     prefs_sli(text).into_iter().map(|x| x.to_vec()).collect()
 }
 
 /// Returns all prefixes of a given string.
-pub fn prefs_sli(text: &bstr) -> Vec<&bstr> {
+pub fn prefs_sli<T>(text: &[T]) -> Vec<&[T]> {
     (0..=text.len()).into_iter().map(|i| &text[..i]).collect()
 }
 
 /// Returns all suffixes of a given string.
-pub fn sufs(text: &bstr) -> Vec<BString> {
+pub fn sufs<T>(text: &[T]) -> Vec<Vec<T>>
+where
+    T: Clone,
+{
     sufs_sli(text).into_iter().map(|x| x.to_vec()).collect()
 }
 
 /// Returns all suffixes of a given string.
-pub fn sufs_sli(text: &bstr) -> Vec<&bstr> {
+pub fn sufs_sli<T>(text: &[T]) -> Vec<&[T]> {
     (0..=text.len()).into_iter().map(|i| &text[i..]).collect()
 }
 
 /// Returns a set of all prefixes of a given string.
-pub fn pref_set(text: &bstr) -> HashSet<BString> {
+pub fn pref_set<T>(text: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Eq + Hash,
+{
     prefs_sli(text).into_iter().map(|x| x.to_vec()).collect()
 }
 
 /// Returns a set of all prefixes of a given string.
-pub fn pref_set_sli(text: &bstr) -> HashSet<&bstr> {
+pub fn pref_set_sli<T>(text: &[T]) -> HashSet<&[T]>
+where
+    T: Hash + Eq,
+{
     prefs_sli(text).into_iter().collect()
 }
 
 /// Returns a set of all suffixes of a given string.
-pub fn suf_set(text: &bstr) -> HashSet<BString> {
+pub fn suf_set<T>(text: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Eq + Hash,
+{
     sufs_sli(text).into_iter().map(|x| x.to_vec()).collect()
 }
 
 /// Returns a set of all suffixes of a given string.
-pub fn suf_set_sli(text: &bstr) -> HashSet<&bstr> {
+pub fn suf_set_sli<T>(text: &[T]) -> HashSet<&[T]>
+where
+    T: Hash + Eq,
+{
     sufs_sli(text).into_iter().collect()
 }
 
 #[test]
 fn test_pre_suf() {
-    let text = str2bstr("banana");
+    let text = br"banana";
     let prefs = prefs(text);
     let sufs = sufs(text);
     // prefix
@@ -61,44 +79,59 @@ fn test_pre_suf() {
 }
 
 /// Returns a set of all substrings of a given string.
-pub fn substrs(text: &bstr) -> HashSet<BString> {
+pub fn substrs<T>(text: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Hash + Eq,
+{
     substrs_sli(text).into_iter().map(|x| x.to_vec()).collect()
 }
 
 /// Returns a set of all substrings of a given string.
-pub fn substrs_sli(text: &bstr) -> HashSet<&bstr> {
+pub fn substrs_sli<T>(text: &[T]) -> HashSet<&[T]>
+where
+    T: Hash + Eq,
+{
     (0..text.len())
         .into_iter()
-        .map(|i| (i..=text.len()).into_iter().map(move |j| &text[i..j]))
-        .flatten()
+        .flat_map(|i| (i..=text.len()).into_iter().map(move |j| &text[i..j]))
         .collect()
 }
 
 /// Filters strings that begin with a given string,
 /// and returns a set of strings whose prefixes are trimmed by the given string.
-pub fn trim_pre(ss: &HashSet<BString>, pre: &bstr) -> HashSet<BString> {
+pub fn trim_pre<T>(ss: &HashSet<Vec<T>>, pre: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Hash + Eq,
+{
     ss.iter()
         .filter(|x| x.starts_with(pre))
-        .map(|x| bstr2bstring(&x[pre.len()..]))
+        .map(|x| x[pre.len()..].to_vec())
         .collect()
 }
 
 #[test]
 fn test_trim_pre() {
-    let ss = HashSet::from(["abab", "acbb", "ccbb", "acc"].map(str2bstring));
-    let pre = str2bstring("ac");
-    let pre_ss = trim_pre(&ss, &pre);
-    let ans = HashSet::from(["bb", "c"].map(str2bstring));
+    let ss = HashSet::from([
+        br"abab".to_vec(),
+        br"acbb".to_vec(),
+        br"ccbb".to_vec(),
+        br"acc".to_vec(),
+    ]);
+    let pre = br"ac";
+    let pre_ss = trim_pre(&ss, pre);
+    let ans = HashSet::from([br"bb".to_vec(), br"c".to_vec()]);
     assert_eq!(pre_ss, ans);
 }
 
 /// Filters strings that end with a given string,
 /// and returns a set of strings whose suffixes are trimmed by the given string.
-pub fn trim_suf(ss: &HashSet<BString>, suf: &bstr) -> HashSet<BString> {
-    // assert!(text.starts_with(pre));
+pub fn trim_suf<T>(ss: &HashSet<Vec<T>>, suf: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Hash + Eq,
+{
     ss.iter()
         .filter(|x| x.ends_with(suf))
-        .map(|x| bstr2bstring(&x[..(x.len() - suf.len())]))
+        .map(|x| x[..(x.len() - suf.len())].to_vec())
         .collect()
 }
 
@@ -114,7 +147,7 @@ fn test_trim_suf() {
 /// Returns a set of strings that start with a given string.
 // pub fn filter_pre(ss: &HashSet<BString>, pre: &BString) -> HashSet<BString> {
 pub fn filter_pre(ss: &HashSet<BString>, pre: &bstr) -> HashSet<BString> {
-    ss.into_iter()
+    ss.iter()
         .cloned()
         // .filter(|s| pre.len() <= s.len() && s.starts_with(pre))
         .filter(|s| pre.len() <= s.len() && *pre == s[..pre.len()])
@@ -125,7 +158,7 @@ pub fn filter_pre(ss: &HashSet<BString>, pre: &bstr) -> HashSet<BString> {
 /// Returns a set of strings that end with a given string.
 // pub fn filter_suf(ss: &HashSet<BString>, suf: &BString) -> HashSet<BString> {
 pub fn filter_suf(ss: &HashSet<BString>, suf: &bstr) -> HashSet<BString> {
-    ss.into_iter()
+    ss.iter()
         .cloned()
         .filter(|s| suf.len() <= s.len() && s.ends_with(suf))
         .collect()
@@ -180,13 +213,13 @@ where
 
 #[test]
 fn test_alphabet() {
-    let text = str2bstr("banana");
+    let text = br"banana";
     let ans = br"abn".to_vec();
     // let ans: Vec<_> = ["a", "b", "n"].iter().map(|s| str2bstring(s)).collect();
     // let ans_rev: Vec<_> = ["n", "b", "a"].iter().map(|s| str2bstring(s)).collect();
     let ans_rev = br"nba".to_vec();
-    assert_eq!(ans, alphabet_asc(&text));
-    assert_eq!(ans_rev, alphabet_desc(&text));
+    assert_eq!(ans, alphabet_asc(text));
+    assert_eq!(ans_rev, alphabet_desc(text));
 }
 
 /// Returns a string that a given string repeats `k` times.
@@ -203,8 +236,8 @@ where
 
 #[test]
 fn test_repeat() {
-    let text = str2bstring("abc");
-    let ans = str2bstring("abcabcabc");
+    let text = br"abc".to_vec();
+    let ans = br"abcabcabc".to_vec();
     assert_eq!(ans, repeat(&text, 3));
 }
 
@@ -241,30 +274,36 @@ where
 /// Returns the exponent of a given string.
 ///
 /// The exponent is the minimum $k$ such that $x=u^k$.
-pub fn exponent(text: &bstr) -> usize {
+pub fn exponent<T>(text: &[T]) -> usize
+where
+    T: Clone + PartialEq,
+{
     for i in 1..text.len() {
         let k = text.len() / i;
         if text.len() % i == 0 && text == repeat(&text[..i], k) {
             return k;
         }
     }
-    return 1;
+    1
 }
 
-pub fn primitive_root(text: &bstr) -> BString {
+pub fn primitive_root<T>(text: &[T]) -> Vec<T>
+where
+    T: Clone + PartialEq,
+{
     let k = exponent(text);
     let len = text.len() / k;
-    bstr2bstring(&text[..len])
+    text[..len].to_vec()
 }
 
 #[test]
 fn test_primitive() {
-    assert!(!is_primitive(str2bstr("abab")));
-    assert!(is_primitive(str2bstr("aba")));
-    assert!(is_primitive(str2bstr("ab")));
+    assert!(!is_primitive(br"abab"));
+    assert!(is_primitive(br"aba"));
+    assert!(is_primitive(br"ab"));
 
-    assert_eq!(3, exponent(str2bstr("ababab")));
-    assert_eq!(str2bstr("ab"), primitive_root(str2bstr("ababab")));
+    assert_eq!(3, exponent(br"ababab"));
+    assert_eq!(br"ab"[..], primitive_root(br"ababab"));
 }
 
 /// Rotates a given string `i` position to the left.
@@ -304,7 +343,7 @@ pub fn eq_rotate(text1: &bstr, text2: &bstr) -> bool {
             return true;
         }
     }
-    return false;
+    false
 }
 
 #[test]
@@ -385,11 +424,14 @@ fn test_enum_strs_len() {
 
 /// Returns an index that, for a key of substring,
 /// stores the number of occurrences of the key.
-pub fn nocc(text: &bstr) -> HashMap<BString, usize> {
-    let mut count: HashMap<BString, usize> = HashMap::new();
+pub fn nocc<T>(text: &[T]) -> HashMap<Vec<T>, usize>
+where
+    T: Clone + Eq + Hash,
+{
+    let mut count: HashMap<Vec<T>, usize> = HashMap::new();
     for i in 0..text.len() {
         for j in i + 1..=text.len() {
-            let entry = count.entry(bstr2bstring(&text[i..j])).or_insert(0);
+            let entry = count.entry(text[i..j].to_vec()).or_insert(0);
             *entry += 1;
         }
     }
@@ -398,74 +440,92 @@ pub fn nocc(text: &bstr) -> HashMap<BString, usize> {
 
 #[test]
 fn test_nocc() {
-    let text = str2bstr("banana");
+    let text = br"banana";
     let nocc = nocc(text);
-    assert_eq!(1, *nocc.get(&str2bstring("b")).unwrap());
-    assert_eq!(3, *nocc.get(&str2bstring("a")).unwrap());
-    assert_eq!(2, *nocc.get(&str2bstring("an")).unwrap());
-    assert_eq!(2, *nocc.get(&str2bstring("ana")).unwrap());
+    assert_eq!(1, *nocc.get(&br"b".to_vec()).unwrap());
+    assert_eq!(3, *nocc.get(&br"a".to_vec()).unwrap());
+    assert_eq!(2, *nocc.get(&br"an".to_vec()).unwrap());
+    assert_eq!(2, *nocc.get(&br"ana".to_vec()).unwrap());
 }
 
 /// Returns a set of the beginning positions of a given string `x` in `w`.
-pub fn beg_pos(w: &bstr, x: &bstr) -> HashSet<usize> {
+pub fn beg_pos<T>(w: &[T], x: &[T]) -> HashSet<usize>
+where
+    T: PartialEq,
+{
     (0..w.len()).filter(|i| w[*i..].starts_with(x)).collect()
 }
 
 #[test]
 fn test_beg_pos() {
-    let text = str2bstr("cocoaccao");
-    let pat = str2bstr("co");
+    let text = br"cocoaccao";
+    let pat = br"co";
     let bpos = beg_pos(text, pat);
     assert_eq!(bpos, HashSet::from([0, 2]));
 }
 
 /// Checks whether beginning positions of substrings `x` and `y` of `w` is equal.
-pub fn eq_bpos_pres(x: &bstr, y: &bstr, pres: &HashSet<BString>) -> bool {
+pub fn eq_bpos_pres<T>(x: &[T], y: &[T], pres: &HashSet<Vec<T>>) -> bool
+where
+    T: Clone + Hash + Eq,
+{
     trim_suf(pres, x) == trim_suf(pres, y)
 }
 
 /// Checks whether beginning positions of substrings `x` and `y` of `w` is equal.
-pub fn eq_bpos(w: &bstr, x: &bstr, y: &bstr) -> bool {
+pub fn eq_bpos<T>(w: &[T], x: &[T], y: &[T]) -> bool
+where
+    T: PartialEq,
+{
     beg_pos(w, x) == beg_pos(w, y)
 }
 
 #[test]
 fn test_eq_bpos() {
-    let text = str2bstr("acocoaao");
-    let x = str2bstr("co");
-    let y = str2bstr("c");
-    let z = str2bstr("aco");
+    let text = br"acocoaao";
+    let x = br"co";
+    let y = br"c";
+    let z = br"aco";
     assert!(eq_bpos(text, x, y));
     assert!(!eq_bpos(text, x, z));
 }
 
 /// Returns a set of the ending positions of a given string `x` in `w`.
-pub fn end_pos(w: &bstr, x: &bstr) -> HashSet<usize> {
+pub fn end_pos<T>(w: &[T], x: &[T]) -> HashSet<usize>
+where
+    T: PartialEq,
+{
     (0..w.len()).filter(|i| w[*i..].ends_with(x)).collect()
 }
 
 /// Checks whether ending positions of substrings `x` and `y` of `w` is equal.
-pub fn eq_epos_suf(x: &bstr, y: &bstr, sufs: &HashSet<BString>) -> bool {
+pub fn eq_epos_suf<T>(x: &[T], y: &[T], sufs: &HashSet<Vec<T>>) -> bool
+where
+    T: Clone + Hash + Eq,
+{
     trim_pre(sufs, x) == trim_pre(sufs, y)
 }
 
 /// Checks whether ending positions of substrings `x` and `y` of `w` is equal.
-pub fn eq_epos(w: &bstr, x: &bstr, y: &bstr) -> bool {
+pub fn eq_epos<T>(w: &[T], x: &[T], y: &[T]) -> bool
+where
+    T: Clone + Hash + Eq,
+{
     let ss = suf_set(w);
     eq_epos_suf(x, y, &ss)
 }
 
 #[test]
 fn test_lr_eq() {
-    let text = str2bstr("banana");
+    let text = br"banana";
     let pres = pref_set(text);
     let sufs = suf_set(text);
-    let ana = str2bstr("ana");
-    let na = str2bstr("na");
-    let an = str2bstr("an");
-    let a = str2bstr("a");
-    let b = str2bstr("b");
-    let ban = str2bstr("ban");
+    let ana = br"ana";
+    let na = br"na";
+    let an = br"an";
+    let a = br"a";
+    let b = br"b";
+    let ban = br"ban";
     assert!(eq_bpos_pres(ana, an, &pres));
     assert!(!eq_bpos_pres(ana, a, &pres));
     assert!(!eq_bpos_pres(na, a, &pres));
@@ -476,17 +536,20 @@ fn test_lr_eq() {
     assert!(!eq_epos_suf(ana, a, &sufs));
 }
 
-fn bpos_groups_(
-    subs: &HashSet<BString>,
-    pres: &HashSet<BString>,
-) -> HashMap<BString, HashSet<BString>> {
-    let mut beg_groups: HashMap<BString, HashSet<BString>> = HashMap::new();
+fn bpos_groups_<T>(
+    subs: &HashSet<Vec<T>>,
+    pres: &HashSet<Vec<T>>,
+) -> HashMap<Vec<T>, HashSet<Vec<T>>>
+where
+    T: Clone + Hash + Eq,
+{
+    let mut beg_groups: HashMap<Vec<T>, HashSet<Vec<T>>> = HashMap::new();
     for x in subs {
         beg_groups.insert(x.clone(), [x.clone()].iter().cloned().collect());
     }
     for x in subs.iter() {
         for y in subs.iter() {
-            if x != y && eq_bpos_pres(&x, &y, pres) {
+            if x != y && eq_bpos_pres(x, y, pres) {
                 beg_groups.get_mut(x).unwrap().insert(y.clone());
                 beg_groups.get_mut(y).unwrap().insert(x.clone());
             }
@@ -498,7 +561,10 @@ fn bpos_groups_(
 /// Returns an index to beginning position groups
 /// For a key of substring, the index stores a set of strings
 /// whose beginning positions are the same to ones of the key.
-pub fn bpos_groups(text: &bstr) -> HashMap<BString, HashSet<BString>> {
+pub fn bpos_groups<T>(text: &[T]) -> HashMap<Vec<T>, HashSet<Vec<T>>>
+where
+    T: Clone + Hash + Eq,
+{
     let subs = substrs(text);
     let prefs = pref_set(text);
     bpos_groups_(&subs, &prefs)
@@ -525,11 +591,14 @@ fn test_bpos_groups() {
     // }
 }
 
-fn epos_groups_(
-    subs: &HashSet<BString>,
-    sufs: &HashSet<BString>,
-) -> HashMap<BString, HashSet<BString>> {
-    let mut req_groups: HashMap<BString, HashSet<BString>> = HashMap::new();
+fn epos_groups_<T>(
+    subs: &HashSet<Vec<T>>,
+    sufs: &HashSet<Vec<T>>,
+) -> HashMap<Vec<T>, HashSet<Vec<T>>>
+where
+    T: Clone + Hash + Eq,
+{
+    let mut req_groups: HashMap<Vec<T>, HashSet<Vec<T>>> = HashMap::new();
     for x in subs.iter() {
         req_groups.insert(x.clone(), [x.clone()].iter().cloned().collect());
     }
@@ -547,7 +616,10 @@ fn epos_groups_(
 /// Returns an index to ending position groups
 /// For a key of substring, the index stores a set of strings
 /// whose ending positions are the same to ones of the key.
-pub fn epos_groups(text: &bstr) -> HashMap<BString, HashSet<BString>> {
+pub fn epos_groups<T>(text: &[T]) -> HashMap<Vec<T>, HashSet<Vec<T>>>
+where
+    T: Clone + Hash + Eq,
+{
     let subs = substrs(text);
     let sufs = suf_set(text);
     epos_groups_(&subs, &sufs)
@@ -585,7 +657,10 @@ pub fn left_maximal(text: &bstr, egmap: &HashMap<BString, HashSet<BString>>) -> 
 }
 
 /// Returns the longest substring in a set of right equal substrings for a given substring.
-pub fn right_maximal(text: &bstr, bgmap: &HashMap<BString, HashSet<BString>>) -> BString {
+pub fn right_maximal<T>(text: &[T], bgmap: &HashMap<Vec<T>, HashSet<Vec<T>>>) -> Vec<T>
+where
+    T: Hash + Eq + Clone,
+{
     bgmap
         .get(text)
         .expect("has key")
@@ -597,15 +672,15 @@ pub fn right_maximal(text: &bstr, bgmap: &HashMap<BString, HashSet<BString>>) ->
 
 #[test]
 fn test_lr_maximal() {
-    let text = str2bstr("banana$");
+    let text = br"banana$";
     let bgmap = bpos_groups(text);
     let egmap = epos_groups(text);
-    let an = str2bstring("an");
-    let na = str2bstring("na");
-    let ans_an = str2bstring("ana");
+    let an = br"an".to_vec();
+    let na = br"na".to_vec();
+    let ans_an = br"ana".to_vec();
     // for (k, v) in lgmap.iter() {
     for v in bgmap.get(&an).unwrap().iter() {
-        println!("v={}", bstr2string(v));
+        println!("v={}", String::from_utf8(v.clone()).unwrap());
     }
     // println!("{:?}", lgmap.get(&an).unwrap());
     let res_right_an = right_maximal(&an, &bgmap);
@@ -628,7 +703,10 @@ fn test_lr_maximal() {
 /// Returns all qgrams which appears in a given string,
 ///
 /// A qgram is a string of length q.
-pub fn qgrams(text: &BString, q: usize) -> HashSet<BString> {
+pub fn qgrams<T>(text: &[T], q: usize) -> HashSet<Vec<T>>
+where
+    T: Clone + Hash + Eq,
+{
     (0..=(text.len() - q))
         .map(|i| text[i..i + q].to_vec())
         .collect()

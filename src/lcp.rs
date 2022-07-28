@@ -1,12 +1,16 @@
-use crate::bstr::*;
-
 /// Retruns LCP array.
-pub fn make_lcpa(text: &bstr, sa: &[usize]) -> Vec<usize> {
+pub fn make_lcpa<T>(text: &[T], sa: &[usize]) -> Vec<usize>
+where
+    T: Ord,
+{
     make_lcpa_kasai(text, sa)
 }
 
 /// Retruns LCP array using Kasai algorithm.
-pub fn make_lcpa_kasai(text: &bstr, sa: &[usize]) -> Vec<usize> {
+pub fn make_lcpa_kasai<T>(text: &[T], sa: &[usize]) -> Vec<usize>
+where
+    T: PartialEq,
+{
     let n = text.len();
     let mut rank = vec![0; text.len()];
     let mut lcp = vec![0; text.len()];
@@ -28,7 +32,7 @@ pub fn make_lcpa_kasai(text: &bstr, sa: &[usize]) -> Vec<usize> {
 #[test]
 fn test_lcp() {
     use crate::sa::*;
-    let text = str2bstr("bananaba$");
+    let text = br"bananaba$";
     let sa = make_sa(text);
     let lcpa = make_lcpa(text, &sa);
     let ans = vec![0, 0, 1, 1, 3, 0, 2, 0, 2];
