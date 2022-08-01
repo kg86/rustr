@@ -3,8 +3,6 @@ use std::{
     hash::Hash,
 };
 
-use crate::bstr::*;
-
 /// Returns all prefixes of a given string.
 pub fn prefs<T>(text: &[T]) -> Vec<Vec<T>>
 where
@@ -137,16 +135,24 @@ where
 
 #[test]
 fn test_trim_suf() {
-    let ss = HashSet::from(["abab", "acbb", "ccbb", "acc"].map(str2bstring));
-    let suf = str2bstring("bb");
+    let ss = HashSet::from([
+        br"abab".to_vec(),
+        br"acbb".to_vec(),
+        br"ccbb".to_vec(),
+        br"acc".to_vec(),
+    ]);
+    let suf = br"bb".to_vec();
     let suf_ss = trim_suf(&ss, &suf);
-    let ans = HashSet::from(["ac", "cc"].map(str2bstring));
+    let ans = HashSet::from([br"ac".to_vec(), br"cc".to_vec()]);
     assert_eq!(suf_ss, ans);
 }
 
 /// Returns a set of strings that start with a given string.
 // pub fn filter_pre(ss: &HashSet<BString>, pre: &BString) -> HashSet<BString> {
-pub fn filter_pre(ss: &HashSet<BString>, pre: &bstr) -> HashSet<BString> {
+pub fn filter_pre<T>(ss: &HashSet<Vec<T>>, pre: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Eq + Hash,
+{
     ss.iter()
         .cloned()
         // .filter(|s| pre.len() <= s.len() && s.starts_with(pre))
@@ -157,7 +163,10 @@ pub fn filter_pre(ss: &HashSet<BString>, pre: &bstr) -> HashSet<BString> {
 
 /// Returns a set of strings that end with a given string.
 // pub fn filter_suf(ss: &HashSet<BString>, suf: &BString) -> HashSet<BString> {
-pub fn filter_suf(ss: &HashSet<BString>, suf: &bstr) -> HashSet<BString> {
+pub fn filter_suf<T>(ss: &HashSet<Vec<T>>, suf: &[T]) -> HashSet<Vec<T>>
+where
+    T: Clone + Hash + Eq,
+{
     ss.iter()
         .cloned()
         .filter(|s| suf.len() <= s.len() && s.ends_with(suf))
@@ -166,20 +175,21 @@ pub fn filter_suf(ss: &HashSet<BString>, suf: &bstr) -> HashSet<BString> {
 
 #[test]
 fn test_filter() {
-    let text = str2bstr("banana");
+    let text = br"banana";
     let sufs = suf_set(text);
-    let a = str2bstring("a");
-    let sufs_a = filter_pre(&sufs, &a);
-    let ans: HashSet<_> = ["anana", "ana", "a"]
-        .iter()
-        .map(|s| str2bstring(s))
-        .collect();
+    let a = &br"a"[..];
+    let sufs_a = filter_pre(&sufs, a);
+    let ans = HashSet::from([br"anana".to_vec(), br"ana".to_vec(), br"a".to_vec()]);
+    // let ans: HashSet<_> = [br"anana".to_vec(), br"ana".to_vec(), br"a".to_vec()]
+    //     .iter()
+    //     .map(|s| str2bstring(s))
+    //     .collect();
     assert_eq!(ans, sufs_a);
 
     let pres = pref_set(text);
-    let an = str2bstring("an");
-    let ans_an: HashSet<_> = ["ban", "banan"].iter().map(|s| str2bstring(s)).collect();
-    assert_eq!(ans_an, filter_suf(&pres, &an));
+    let an = &br"an"[..];
+    let ans_an = HashSet::from([br"ban".to_vec(), br"banan".to_vec()]);
+    assert_eq!(ans_an, filter_suf(&pres, an));
 }
 
 /// Returns a set of characters that appear in a given string.
@@ -334,7 +344,10 @@ where
 }
 
 /// Checks whether a rotation of a given string equals the other string.
-pub fn eq_rotate(text1: &bstr, text2: &bstr) -> bool {
+pub fn eq_rotate<T>(text1: &[T], text2: &[T]) -> bool
+where
+    T: Clone + Eq,
+{
     if text1.len() != text2.len() {
         return false;
     }
@@ -349,15 +362,15 @@ pub fn eq_rotate(text1: &bstr, text2: &bstr) -> bool {
 #[test]
 fn test_rotate() {
     // let text = "aaab".as_bytes();
-    let text = str2bstr("aaab");
-    assert_eq!(str2bstring("aaab"), rotate_left(text, 0));
-    assert_eq!(str2bstring("aaba"), rotate_left(text, 1));
-    assert_eq!(str2bstring("abaa"), rotate_left(text, 2));
-    assert_eq!(str2bstring("baaa"), rotate_left(text, 3));
-    assert_eq!(str2bstring("aaab"), rotate_left(text, 4));
+    let text = br"aaab";
+    assert_eq!(&br"aaab"[..], rotate_left(text, 0));
+    assert_eq!(&br"aaba"[..], rotate_left(text, 1));
+    assert_eq!(&br"abaa"[..], rotate_left(text, 2));
+    assert_eq!(&br"baaa"[..], rotate_left(text, 3));
+    assert_eq!(&br"aaab"[..], rotate_left(text, 4));
 
-    assert!(eq_rotate(text, str2bstr("abaa")));
-    assert!(!eq_rotate(text, str2bstr("bbaa")));
+    assert!(eq_rotate(text, &br"abaa"[..]));
+    assert!(!eq_rotate(text, &br"bbaa"[..]));
 }
 
 /// Enumerates strings of length `len`.
@@ -398,19 +411,23 @@ where
 #[test]
 fn test_enum_strs_len() {
     // let alpha: Vec<BString> = alphabet(str2bstr("ab")).into_iter().collect();
-    let alpha: Vec<u8> = alphabet_asc(str2bstr("ab"));
+    let alpha: Vec<u8> = alphabet_asc(&br"ab"[..]);
     let ss1 = enum_strs_len_eq(&alpha, 1);
     let ss2 = enum_strs_len_eq(&alpha, 2);
     let ss3 = enum_strs_len_eq(&alpha, 3);
-    let ans1: Vec<BString> = ["a", "b"].iter().map(|x| str2bstring(x)).collect();
-    let ans2: Vec<Vec<u8>> = ["aa", "ab", "ba", "bb"]
-        .iter()
-        .map(|x| str2bstring(x))
-        .collect();
-    let ans3: Vec<Vec<u8>> = ["aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"]
-        .iter()
-        .map(|x| str2bstring(x))
-        .collect();
+    let ans1 = vec![br"a".to_vec(), br"b".to_vec()];
+    let ans2 = vec![
+        br"aa".to_vec(),
+        br"ab".to_vec(),
+        br"ba".to_vec(),
+        br"bb".to_vec(),
+    ];
+    let ans3: Vec<Vec<u8>> = [
+        br"aaa", br"aab", br"aba", br"abb", br"baa", br"bab", br"bba", br"bbb",
+    ]
+    .iter()
+    .map(|x| x.to_vec())
+    .collect();
     println!("ans1 {:?}", ans1);
     println!("ss1 {:?}", ss1);
     println!("ans2 {:?}", ans2);
@@ -572,19 +589,19 @@ where
 
 #[test]
 fn test_bpos_groups() {
-    let text = str2bstr("cocoa");
+    let text = br"cocoa";
     let bgroup = bpos_groups(text);
     assert_eq!(
-        *bgroup.get(str2bstr("a")).unwrap(),
-        HashSet::from(["a"].map(str2bstring))
+        *bgroup.get(&br"a".to_vec()).unwrap(),
+        HashSet::from([br"a".to_vec()])
     );
     assert_eq!(
-        *bgroup.get(str2bstr("oco")).unwrap(),
-        HashSet::from(["oc", "oco", "ocoa"].map(str2bstring))
+        *bgroup.get(&br"oco"[..]).unwrap(),
+        HashSet::from([br"oc".to_vec(), br"oco".to_vec(), br"ocoa".to_vec()])
     );
     assert_eq!(
-        *bgroup.get(str2bstr("c")).unwrap(),
-        HashSet::from(["c", "co"].map(str2bstring))
+        *bgroup.get(&br"c"[..]).unwrap(),
+        HashSet::from([br"c".to_vec(), br"co".to_vec()])
     );
     // for (k, v) in bgroup {
     //     println!("[{}]={}", bstr2string(&k), bstrs2string_set(&v));
@@ -627,30 +644,34 @@ where
 
 #[test]
 fn test_lr_eq_groups() {
-    let text = str2bstr("banana");
-    println!("{:?} {}", text, bstr2string(text));
+    let text = br"banana";
+    // println!("{:?} {}", text, bstr2string(text));
     let egroup = epos_groups(text);
     // println!("{:?}", rg);
     // for (k, v) in rg.iter() {
     //     let ve: Vec<_> = v.iter().cloned().collect();
     //     println!("k={}, v={}", bstr2string(&k), bstrs2string(&ve));
     // }
-    let ans_an: HashSet<_> = ["na", "ana"].iter().cloned().map(str2bstring).collect();
-    let res_an = egroup.get(&str2bstring("na")).unwrap();
+    let ans_an = HashSet::from([br"na".to_vec(), br"ana".to_vec()]);
+    let res_an = egroup.get(&br"na"[..]).unwrap();
     assert_eq!(ans_an, *res_an);
 
     let bgroup = bpos_groups(text);
-    let ans_na: HashSet<_> = ["an", "ana"].iter().cloned().map(str2bstring).collect();
-    let res_na = bgroup.get(&str2bstring("an")).unwrap();
+    let ans_na = HashSet::from([br"an".to_vec(), br"ana".to_vec()]);
+    let res_na = bgroup.get(&br"an"[..]).unwrap();
     assert_eq!(ans_na, *res_na);
 }
 
 /// Returns the longest substring in a set of left equal substrings for a given substring.
-pub fn left_maximal(text: &bstr, egmap: &HashMap<BString, HashSet<BString>>) -> BString {
+pub fn left_maximal<T>(text: &[T], egmap: &HashMap<Vec<T>, HashSet<Vec<T>>>) -> Vec<T>
+where
+    T: Eq + Hash + Clone,
+{
     egmap
         .get(text)
         .expect("has key")
         .iter()
+        .cloned()
         .max_by_key(|k| k.len())
         .unwrap()
         .clone()

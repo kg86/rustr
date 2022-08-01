@@ -1,4 +1,4 @@
-pub mod bstr;
+// pub mod bstr;
 pub mod cdawg;
 pub mod commons;
 pub mod dawg;
