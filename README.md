@@ -3,25 +3,23 @@
 `rustr` contains several implementations for stringology.
 
 ## Implementations
-### String Index
+### String Tree Family
 
-- Compact Directed Acyclic Word Graph
-- Directed Acyclic Word Graph
-- Longest Common Prefix Array
-- Suffix Array
-- Suffix Tree
-- Sufffix Trie
+- [Sufffix Trie](./src/suffix_trie.rs)
+- [Suffix Tree](./src/suffix_tree)
+- [Suffix Array](./src/sa.rs)
+- [Longest Common Prefix Array](./src/lcp.rs)
 
 ### String Classes
 
-- Fibonacci String
+- [Fibonacci String](./src/fib.rs)
 - [Lyndon Word](./src/lyndon.rs)
-- Palindrome
+- [Palindrome](./src/palindrome.rs)
 
 ### Others
 
-- Minimal Unique Substrings
-- Debruijn Graph
+- [Minimal Unique Substrings](./src/mus.rs)
+- [Debruijn Graph](./src/debruijn.rs)
 
 ## Build Docs
 

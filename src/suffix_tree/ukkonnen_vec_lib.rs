@@ -5,10 +5,11 @@ use std::{
 };
 
 #[derive(Debug)]
-struct Graph {
-    nodes: HashSet<usize>,
-    edges: HashSet<(usize, usize, String)>,
+pub struct Graph {
+    pub nodes: HashSet<usize>,
+    pub edges: HashSet<(usize, usize, String)>,
 }
+
 #[derive(PartialEq, Debug)]
 enum NodeType {
     Root,
@@ -105,31 +106,29 @@ impl Tree {
     // move from `ap` with `c`.
     fn move_ap(&self, ap: &ImplicitNode, c: u8) -> Option<ImplicitNode> {
         if ap.at_node() {
-            match self.nodes[ap.nid].children.get(&c) {
-                Some(&cid) => Some(ImplicitNode {
+            self.nodes[ap.nid]
+                .children
+                .get(&c)
+                .map(|&cid| ImplicitNode {
                     nid: cid,
                     match_len: 1,
                     edge_len: self.nodes[cid].elen,
-                }),
-                None => None,
-            }
-        } else {
-            if self.text[self.nodes[ap.nid].ebeg + ap.match_len] == c {
-                Some(ImplicitNode {
-                    nid: ap.nid,
-                    match_len: ap.match_len + 1,
-                    edge_len: ap.edge_len,
                 })
-            } else {
-                None
-            }
+        } else if self.text[self.nodes[ap.nid].ebeg + ap.match_len] == c {
+            Some(ImplicitNode {
+                nid: ap.nid,
+                match_len: ap.match_len + 1,
+                edge_len: ap.edge_len,
+            })
+        } else {
+            None
         }
     }
 
     // move from node `nid` with key `key`.
     // it is guaranteed that we can move with key `key`.
     fn move_trust(&self, nid: usize, key: &[u8]) -> ImplicitNode {
-        if key.len() == 0 {
+        if key.is_empty() {
             assert_ne!(self.nodes[nid].node_type(), NodeType::Leaf);
             ImplicitNode {
                 nid,
@@ -235,7 +234,7 @@ impl Tree {
         }
     }
 
-    fn graph(&self) -> Graph {
+    pub fn graph(&self) -> Graph {
         let mut nodes = HashSet::new();
         let mut edges = HashSet::new();
         for i in 0..self.nodes.len() {
@@ -265,5 +264,11 @@ impl Tree {
     pub fn dump(&self, fpath: &str) -> Result<usize, std::io::Error> {
         let mut file = File::create(fpath)?;
         file.write(self.serialize().as_bytes())
+    }
+}
+
+impl Default for Tree {
+    fn default() -> Self {
+        Self::new()
     }
 }

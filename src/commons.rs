@@ -674,7 +674,6 @@ where
         .cloned()
         .max_by_key(|k| k.len())
         .unwrap()
-        .clone()
 }
 
 /// Returns the longest substring in a set of right equal substrings for a given substring.
