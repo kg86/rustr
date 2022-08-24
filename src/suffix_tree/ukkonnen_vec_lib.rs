@@ -50,14 +50,14 @@ struct ImplicitNode {
     edge_len: usize,
 }
 impl ImplicitNode {
-    fn root() -> Self {
-        ImplicitNode {
+    const fn root() -> Self {
+        Self {
             nid: 0,
             match_len: 0,
             edge_len: 0,
         }
     }
-    fn at_node(&self) -> bool {
+    const fn at_node(&self) -> bool {
         self.edge_len == self.match_len
     }
 }

@@ -5,9 +5,8 @@
 ## Implementations
 ### String Tree Family
 
-- [Sufffix Trie](./src/suffix_trie.rs)
 - [Suffix Tree](./src/suffix_tree)
-- [Suffix Array](./src/sa.rs)
+- [Suffix Array](./src/suffix_array)
 - [Longest Common Prefix Array](./src/lcp.rs)
 
 ### String Classes

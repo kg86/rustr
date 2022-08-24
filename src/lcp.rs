@@ -31,7 +31,7 @@ where
 
 #[test]
 fn test_lcp() {
-    use crate::sa::*;
+    use crate::suffix_array::sanaive::*;
     let text = br"bananaba$";
     let sa = make_sa(text);
     let lcpa = make_lcpa(text, &sa);

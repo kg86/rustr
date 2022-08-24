@@ -1,7 +1,7 @@
 use std::cmp::max;
 
 use crate::lcp::*;
-use crate::sa::*;
+use crate::suffix_array::sanaive::*;
 
 /// Compute Minimal Unique Substrings (MUSs) array `musa` of a string `text`.
 /// for `musa[i]=j`, text[j..i] is MUS.
