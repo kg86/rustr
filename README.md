@@ -15,6 +15,10 @@
 - [Lyndon Word](./src/lyndon.rs)
 - [Palindrome](./src/palindrome.rs)
 
+### Compressions
+
+- [LZ77](./src/lz77.rs)
+- [RLZ](./src/rlz.rs)
 ### Others
 
 - [Minimal Unique Substrings](./src/mus.rs)
